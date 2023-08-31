@@ -1,8 +1,15 @@
-import { Controller, Get, Post, Put, Delete } from '@nestjs/common';
-import { CaslAbilityFactory } from 'src/modules/common/infrastructure/casl/casl-ability.factory';
-import { Action } from '../application/enum/action.enum';
-import { User } from '../domain/user.domain';
+import { Controller, Get, Post, Put, Delete, UseGuards } from '@nestjs/common';
+import {
+  AppAbility,
+  CaslAbilityFactory,
+} from 'src/modules/common/infrastructure/casl/casl-ability.factory';
+import { Action } from '../../common/application/enum/action.enum';
 import { Product } from '../domain/product.domain';
+import { PoliceGuard } from 'src/modules/common/application/guard/police-guard';
+import { CheckPolicies } from 'src/modules/common/application/repository/police-guard.repository';
+
+const product = new Product();
+product.user = 1;
 
 @Controller('product')
 export class ProductController {
@@ -10,45 +17,32 @@ export class ProductController {
 
   @Get()
   findAll(): string {
-    const user = {
-      id: 1,
-      isAdmin: false,
-    };
-
-    const ability = this.caslAbilityFactory.createForUser(user);
-    if (ability.can(Action.Manage, 'all')) {
-      return 'This action returns all products';
-    } else {
-      return 'Only admins!!!';
-    }
+    return 'This action returns all products';
   }
 
+  @UseGuards(PoliceGuard)
+  @CheckPolicies((ability: AppAbility) => ability.can(Action.Manage, 'all'))
   @Get(':id')
   findOne(id: string): string {
     return `This action returns a product with id ${id}`;
   }
 
+  @UseGuards(PoliceGuard)
+  @CheckPolicies((ability: AppAbility) => ability.can(Action.Create, product))
   @Post()
   create(): string {
     return 'This action adds a new product';
   }
 
+  @UseGuards(PoliceGuard)
+  @CheckPolicies((ability: AppAbility) => ability.can(Action.Update, product))
   @Put(':id')
   update(id: string): string {
-    const user = new User();
-    user.id = 2;
-
-    const product = new Product();
-    product.user = 1;
-
-    const ability = this.caslAbilityFactory.createForUser(user);
-    if (ability.can(Action.Update, product)) {
-      return `This action updates a product with id ${id}`;
-    } else {
-      return 'You can only update your products!!!';
-    }
+    return `This action updates a product with id ${id}`;
   }
 
+  @UseGuards(PoliceGuard)
+  @CheckPolicies((ability: AppAbility) => ability.can(Action.Manage, 'all'))
   @Delete(':id')
   remove(id: string): string {
     return `This action removes a product with id ${id}`;
