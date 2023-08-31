@@ -8,7 +8,7 @@ import {
 import { Injectable } from '@nestjs/common';
 import { Product } from '../../../product/domain/product.domain';
 import { User } from '../../../product/domain/user.domain';
-import { Action } from '../../../product/application/enum/action.enum';
+import { Action } from '../../application/enum/action.enum';
 
 type Subjects = InferSubjects<typeof Product | typeof User> | 'all';
 
@@ -23,11 +23,12 @@ export class CaslAbilityFactory {
 
     if (user.isAdmin) {
       can(Action.Manage, 'all');
-    } else {
-      can(Action.Read, Product, 'all');
+    } else if (user.isProducer) {
+      can(Action.Create, Product);
+      can(Action.Update, Product, { user: user.id });
     }
 
-    can(Action.Update, Product, { user: user.id });
+    can(Action.Read, Product, 'all');
 
     return build({
       detectSubjectType: (item) =>
